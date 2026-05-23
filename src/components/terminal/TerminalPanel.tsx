@@ -9,11 +9,17 @@ export default function TerminalPanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const sessionIdRef = useRef<number | null>(null);
 
   const sessionId = useTerminalStore((s) => s.sessionId);
   const isConnected = useTerminalStore((s) => s.isConnected);
   const isBunAvailable = useTerminalStore((s) => s.isBunAvailable);
   const sendCommand = useTerminalStore((s) => s.sendCommand);
+
+  // Keep ref in sync so the onData callback always sees the latest sessionId
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -44,10 +50,8 @@ export default function TerminalPanel() {
         brightCyan: '#56b6c2',
         brightWhite: '#ffffff',
       },
-      allowProposedApi: true,
       allowTransparency: false,
       scrollback: 10000,
-      convertEol: true,
     });
 
     const fitAddon = new FitAddon();
@@ -60,8 +64,9 @@ export default function TerminalPanel() {
     fitAddon.fit();
 
     term.onData((data) => {
-      if (sessionId != null && window.electronAPI) {
-        window.electronAPI.terminal.write(sessionId, data);
+      const id = sessionIdRef.current;
+      if (id != null && window.electronAPI) {
+        window.electronAPI.terminal.write(id, data);
       }
     });
 
@@ -80,12 +85,9 @@ export default function TerminalPanel() {
     const handleResize = () => {
       try {
         fitAddon.fit();
-        if (sessionId != null && window.electronAPI) {
-          window.electronAPI.terminal.resize(
-            sessionId,
-            term.cols,
-            term.rows
-          );
+        const id = sessionIdRef.current;
+        if (id != null && window.electronAPI) {
+          window.electronAPI.terminal.resize(id, term.cols, term.rows);
         }
       } catch {}
     };

@@ -1,9 +1,20 @@
 import { IpcMain, dialog, BrowserWindow } from 'electron';
 import fs from 'fs';
+import MarkdownIt from 'markdown-it';
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+});
+
+function renderMarkdown(content: string): string {
+  return md.render(content);
+}
 
 export function registerExportHandlers(ipcMain: IpcMain) {
-  ipcMain.handle('export:html', async (_event, content: string, options?: any) => {
-    const win = BrowserWindow.getFocusedWindow();
+  ipcMain.handle('export:html', async (event, content: string, options?: any) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return null;
 
     const result = await dialog.showSaveDialog(win, {
@@ -13,6 +24,7 @@ export function registerExportHandlers(ipcMain: IpcMain) {
 
     if (result.canceled || !result.filePath) return null;
 
+    const rendered = renderMarkdown(content);
     const fullHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -30,15 +42,15 @@ export function registerExportHandlers(ipcMain: IpcMain) {
     ${options?.customCSS || ''}
   </style>
 </head>
-<body>${content}</body>
+<body>${rendered}</body>
 </html>`;
 
     fs.writeFileSync(result.filePath, fullHtml, 'utf-8');
     return result.filePath;
   });
 
-  ipcMain.handle('export:pdf', async (_event, content: string, options?: any) => {
-    const win = BrowserWindow.getFocusedWindow();
+  ipcMain.handle('export:pdf', async (event, content: string, options?: any) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return null;
 
     const result = await dialog.showSaveDialog(win, {
@@ -48,7 +60,7 @@ export function registerExportHandlers(ipcMain: IpcMain) {
 
     if (result.canceled || !result.filePath) return null;
 
-    // Use a hidden BrowserWindow to render and print to PDF
+    const rendered = renderMarkdown(content);
     const pdfWin = new BrowserWindow({
       width: 800,
       height: 600,
@@ -59,7 +71,7 @@ export function registerExportHandlers(ipcMain: IpcMain) {
     const fullHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <style>body{max-width:800px;margin:0 auto;padding:2rem;font-family:sans-serif;line-height:1.6;}</style>
-</head><body>${content}</body></html>`;
+</head><body>${rendered}</body></html>`;
 
     await pdfWin.loadURL(
       `data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`
@@ -77,10 +89,8 @@ export function registerExportHandlers(ipcMain: IpcMain) {
     return result.filePath;
   });
 
-  ipcMain.handle('export:docx', async (_event, content: string, options?: any) => {
-    // For production, integrate the docx.js library here
-    // For now, export as HTML with .doc extension (Word can open HTML)
-    const win = BrowserWindow.getFocusedWindow();
+  ipcMain.handle('export:docx', async (event, content: string, options?: any) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return null;
 
     const result = await dialog.showSaveDialog(win, {
@@ -90,10 +100,11 @@ export function registerExportHandlers(ipcMain: IpcMain) {
 
     if (result.canceled || !result.filePath) return null;
 
+    const rendered = renderMarkdown(content);
     const fullHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <style>body{max-width:800px;margin:0 auto;padding:2rem;font-family:sans-serif;line-height:1.6;}</style>
-</head><body>${content}</body></html>`;
+</head><body>${rendered}</body></html>`;
 
     fs.writeFileSync(result.filePath, fullHtml, 'utf-8');
     return result.filePath;

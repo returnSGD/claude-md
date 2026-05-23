@@ -40,8 +40,8 @@ function buildFileTree(dirPath: string): FileTreeNode[] {
 }
 
 export function registerFileSystemHandlers(ipcMain: IpcMain) {
-  ipcMain.handle('file:open', async (_event, filePath?: string) => {
-    const win = BrowserWindow.getFocusedWindow();
+  ipcMain.handle('file:open', async (event, filePath?: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
     if (!filePath && win) {
       const result = await dialog.showOpenDialog(win, {
         title: 'Open Markdown File',
@@ -66,8 +66,8 @@ export function registerFileSystemHandlers(ipcMain: IpcMain) {
     return { success: true };
   });
 
-  ipcMain.handle('file:saveAs', async (_event, content: string) => {
-    const win = BrowserWindow.getFocusedWindow();
+  ipcMain.handle('file:saveAs', async (event, content: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return null;
 
     const result = await dialog.showSaveDialog(win, {
