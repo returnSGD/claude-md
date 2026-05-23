@@ -22,6 +22,7 @@ const electronAPI = {
   },
 
   terminal: {
+    checkBun: () => ipcRenderer.invoke('terminal:checkBun'),
     create: (workDir: string) => ipcRenderer.invoke('terminal:create', workDir),
     write: (sessionId: number, data: string) =>
       ipcRenderer.invoke('terminal:write', sessionId, data),

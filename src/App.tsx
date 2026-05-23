@@ -26,6 +26,7 @@ export default function App() {
 
   const isConnected = useTerminalStore((s) => s.isConnected);
   const connect = useTerminalStore((s) => s.connect);
+  const checkBunAvailability = useTerminalStore((s) => s.checkBunAvailability);
 
   const viewMode = usePreviewStore((s) => s.viewMode);
   const setViewMode = usePreviewStore((s) => s.setViewMode);
@@ -53,6 +54,11 @@ export default function App() {
     if (!completed && !showFirstLaunch) {
       setShowFirstLaunch(true);
     }
+  }, []);
+
+  // Check Bun availability on startup
+  useEffect(() => {
+    checkBunAvailability();
   }, []);
 
   // Keyboard shortcuts

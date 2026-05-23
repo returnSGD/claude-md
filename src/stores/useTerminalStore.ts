@@ -15,6 +15,7 @@ interface TerminalStore {
   connect: (workDir: string) => Promise<void>;
   disconnect: () => Promise<void>;
   sendCommand: (cmd: string) => void;
+  checkBunAvailability: () => Promise<void>;
 }
 
 export const useTerminalStore = create<TerminalStore>((set, get) => ({
@@ -33,10 +34,20 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     if (!window.electronAPI) return;
     try {
       const id = await window.electronAPI.terminal.create(workDir);
-      set({ sessionId: id, isConnected: true });
+      set({ sessionId: id, isConnected: true, isBunAvailable: true });
     } catch (err) {
       console.error('Failed to connect terminal:', err);
       set({ isConnected: false, isBunAvailable: false });
+    }
+  },
+
+  checkBunAvailability: async () => {
+    if (!window.electronAPI) return;
+    try {
+      const available = await window.electronAPI.terminal.checkBun();
+      set({ isBunAvailable: available });
+    } catch {
+      set({ isBunAvailable: false });
     }
   },
 

@@ -49,6 +49,7 @@ export interface ElectronAPI {
     onFileChange(callback: (events: any) => void): () => void;
   };
   terminal: {
+    checkBun(): Promise<boolean>;
     create(workDir: string): Promise<number>;
     write(sessionId: number, data: string): Promise<void>;
     resize(sessionId: number, cols: number, rows: number): Promise<void>;

@@ -11,6 +11,10 @@ const sessions = new Map<number, TerminalSession>();
 let nextSessionId = 1;
 
 export function registerTerminalHandlers(ipcMain: IpcMain) {
+  ipcMain.handle('terminal:checkBun', async () => {
+    return findBun() !== null;
+  });
+
   ipcMain.handle('terminal:create', async (_event, workDir: string) => {
     const bunPath = findBun();
     if (!bunPath) {
