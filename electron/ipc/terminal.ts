@@ -15,28 +15,20 @@ export function registerTerminalHandlers(ipcMain: IpcMain) {
     return findBun() !== null;
   });
 
-  ipcMain.handle('terminal:create', async (_event, workDir: string) => {
-    const bunPath = findBun();
-    if (!bunPath) {
-      throw new Error(
-        'Bun runtime not found. Please install Bun from https://bun.sh'
-      );
-    }
-
+  ipcMain.handle('terminal:create', async (event, workDir: string) => {
     const id = nextSessionId++;
-    const win = BrowserWindow.getFocusedWindow();
+    const win = BrowserWindow.fromWebContents(event.sender);
 
-    // Determine the Claude Code entry point
-    // In development, it's relative to the project; in production, bundled with app
-    const claudeCodeEntry = process.env.CLAUDE_CODE_ENTRY || 'claude';
+    const platform = process.platform;
+    const shellCmd = platform === 'win32'
+      ? (process.env.COMSPEC || 'cmd.exe')
+      : (process.env.SHELL || '/bin/bash');
 
-    const child = spawn(bunPath, [claudeCodeEntry], {
+    const child = spawn(shellCmd, {
       cwd: workDir,
       env: {
         ...process.env,
         TERM: 'xterm-256color',
-        // Pass through API key from app config
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
       },
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: false,
@@ -59,7 +51,7 @@ export function registerTerminalHandlers(ipcMain: IpcMain) {
     child.on('exit', (code) => {
       win?.webContents.send('terminal:data', {
         sessionId: id,
-        data: `\r\n[Claude Code exited with code ${code}]\r\n`,
+        data: `\r\n[Process exited with code ${code}]\r\n`,
       });
       sessions.delete(id);
     });
