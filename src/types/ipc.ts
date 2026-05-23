@@ -50,7 +50,7 @@ export interface ElectronAPI {
   };
   terminal: {
     checkBun(): Promise<boolean>;
-    create(workDir: string): Promise<number>;
+    create(workDir: string, options?: { cols?: number; rows?: number }): Promise<number>;
     write(sessionId: number, data: string): Promise<void>;
     resize(sessionId: number, cols: number, rows: number): Promise<void>;
     destroy(sessionId: number): Promise<void>;

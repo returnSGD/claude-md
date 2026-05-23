@@ -23,7 +23,8 @@ const electronAPI = {
 
   terminal: {
     checkBun: () => ipcRenderer.invoke('terminal:checkBun'),
-    create: (workDir: string) => ipcRenderer.invoke('terminal:create', workDir),
+    create: (workDir: string, options?: { cols?: number; rows?: number }) =>
+      ipcRenderer.invoke('terminal:create', workDir, options),
     write: (sessionId: number, data: string) =>
       ipcRenderer.invoke('terminal:write', sessionId, data),
     resize: (sessionId: number, cols: number, rows: number) =>

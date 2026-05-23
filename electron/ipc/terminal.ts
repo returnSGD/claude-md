@@ -1,89 +1,90 @@
 import { IpcMain, BrowserWindow } from 'electron';
-import { spawn, ChildProcess } from 'child_process';
+import * as pty from 'node-pty';
 import { findBun } from '../utils/bunResolver';
 
 interface TerminalSession {
   id: number;
-  process: ChildProcess;
+  ptyProcess: pty.IPty;
 }
 
 const sessions = new Map<number, TerminalSession>();
 let nextSessionId = 1;
+
+function getShell(): { cmd: string; args: string[] } {
+  if (process.platform === 'win32') {
+    const cmd = process.env.COMSPEC || 'cmd.exe';
+    // Force UTF-8 code page so Chinese characters render correctly
+    return { cmd, args: ['/K', 'chcp', '65001', '>nul'] };
+  }
+  return {
+    cmd: process.env.SHELL || '/bin/bash',
+    args: [],
+  };
+}
 
 export function registerTerminalHandlers(ipcMain: IpcMain) {
   ipcMain.handle('terminal:checkBun', async () => {
     return findBun() !== null;
   });
 
-  ipcMain.handle('terminal:create', async (event, workDir: string) => {
+  ipcMain.handle('terminal:create', async (event, workDir: string, options?: { cols?: number; rows?: number }) => {
     const id = nextSessionId++;
     const win = BrowserWindow.fromWebContents(event.sender);
+    const { cmd, args } = getShell();
 
-    const platform = process.platform;
-    const shellCmd = platform === 'win32'
-      ? (process.env.COMSPEC || 'cmd.exe')
-      : (process.env.SHELL || '/bin/bash');
+    const cols = options?.cols || 80;
+    const rows = options?.rows || 24;
 
-    const child = spawn(shellCmd, {
+    const ptyProcess = pty.spawn(cmd, args, {
+      name: 'xterm-256color',
+      cols,
+      rows,
       cwd: workDir,
       env: {
         ...process.env,
-        TERM: 'xterm-256color',
+        LANG: 'zh_CN.UTF-8',
+        LC_ALL: 'zh_CN.UTF-8',
       },
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: false,
     });
 
-    child.stdout?.on('data', (data: Buffer) => {
+    ptyProcess.onData((data: string) => {
       win?.webContents.send('terminal:data', {
         sessionId: id,
-        data: data.toString(),
+        data,
       });
     });
 
-    child.stderr?.on('data', (data: Buffer) => {
+    ptyProcess.onExit(({ exitCode }) => {
       win?.webContents.send('terminal:data', {
         sessionId: id,
-        data: data.toString(),
-      });
-    });
-
-    child.on('exit', (code) => {
-      win?.webContents.send('terminal:data', {
-        sessionId: id,
-        data: `\r\n[Process exited with code ${code}]\r\n`,
+        data: `\r\n[Process exited with code ${exitCode}]\r\n`,
       });
       sessions.delete(id);
     });
 
-    child.on('error', (err) => {
-      win?.webContents.send('terminal:data', {
-        sessionId: id,
-        data: `\r\n[Error: ${err.message}]\r\n`,
-      });
-    });
-
-    sessions.set(id, { id, process: child });
+    sessions.set(id, { id, ptyProcess });
 
     return id;
   });
 
   ipcMain.handle('terminal:write', (_event, sessionId: number, data: string) => {
     const session = sessions.get(sessionId);
-    if (session && session.process.stdin) {
-      session.process.stdin.write(data);
+    if (session) {
+      session.ptyProcess.write(data);
     }
   });
 
   ipcMain.handle('terminal:resize', (_event, sessionId: number, cols: number, rows: number) => {
-    // PTY resize not applicable for spawn-based approach
-    // For full PTY support, integrate node-pty here
+    const session = sessions.get(sessionId);
+    if (session) {
+      session.ptyProcess.resize(cols, rows);
+    }
   });
 
   ipcMain.handle('terminal:destroy', (_event, sessionId: number) => {
     const session = sessions.get(sessionId);
     if (session) {
-      session.process.kill();
+      session.ptyProcess.kill();
       sessions.delete(sessionId);
     }
   });
