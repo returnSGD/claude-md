@@ -298,3 +298,25 @@ body,
 .fade-in {
   animation: fadeIn 0.2s ease;
 }
+
+/* ===== Chat UI ===== */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.blinking-cursor {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes dotPulse {
+  0% { opacity: 0.2; content: '.'; }
+  33% { opacity: 1; content: '..'; }
+  66% { opacity: 1; content: '...'; }
+  100% { opacity: 0.2; content: '..'; }
+}
+
+.dot-pulse::after {
+  content: '...';
+  animation: dotPulse 1.5s infinite;
+}

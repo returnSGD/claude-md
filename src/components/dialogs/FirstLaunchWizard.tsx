@@ -1,42 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useTerminalStore } from '../../stores/useTerminalStore';
+import React, { useState } from 'react';
 
 interface Props {
   onComplete: (apiKey?: string, apiBaseUrl?: string) => void;
 }
 
-type Step = 'welcome' | 'bun-check' | 'api-key' | 'done';
+type Step = 'welcome' | 'api-key' | 'done';
 
 export default function FirstLaunchWizard({ onComplete }: Props) {
   const [step, setStep] = useState<Step>('welcome');
   const [apiKey, setApiKey] = useState('');
   const [apiBaseUrl, setApiBaseUrl] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [bunStatus, setBunStatus] = useState<'checking' | 'found' | 'not-found'>('checking');
-
-  const setBunAvailable = useTerminalStore((s) => s.setBunAvailable);
-
-  // Check Bun on mount
-  useEffect(() => {
-    async function check() {
-      try {
-        // Use the Electron IPC to check for bun
-        const platform = await window.electronAPI?.app.getPlatform();
-        // Simple check: try to find bun using the preload API
-        // In production, this would call the bunResolver via IPC
-        const result = await window.electronAPI?.terminal.create('/tmp');
-        if (result != null) {
-          setBunStatus('found');
-          setBunAvailable(true);
-          await window.electronAPI?.terminal.destroy(result);
-        }
-      } catch {
-        setBunStatus('not-found');
-        setBunAvailable(false);
-      }
-    }
-    check();
-  }, []);
 
   const handleComplete = () => {
     onComplete(apiKey || undefined, apiBaseUrl || undefined);
@@ -53,7 +27,7 @@ export default function FirstLaunchWizard({ onComplete }: Props) {
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
               An AI-powered Markdown editor with PyCharm-style layout.
               <br />
-              Write, preview, and get AI assistance — all in one place.
+              Write, preview, and chat with Claude Code — all in one place.
             </p>
             <button
               className="px-6 py-2 rounded text-sm font-medium"
@@ -63,70 +37,10 @@ export default function FirstLaunchWizard({ onComplete }: Props) {
                 border: 'none',
                 cursor: 'pointer',
               }}
-              onClick={() => setStep('bun-check')}
+              onClick={() => setStep('api-key')}
             >
               Get Started
             </button>
-          </div>
-        );
-
-      case 'bun-check':
-        return (
-          <div>
-            <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Bun Runtime Check
-            </h2>
-            {bunStatus === 'checking' && (
-              <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                <div className="animate-spin w-4 h-4 border-2 rounded-full" style={{ borderColor: 'var(--accent-color) transparent transparent transparent' }} />
-                Checking for Bun...
-              </div>
-            )}
-            {bunStatus === 'found' && (
-              <div>
-                <p className="text-sm mb-4" style={{ color: '#98c379' }}>
-                  ✓ Bun runtime found! AI terminal will be available.
-                </p>
-                <button
-                  className="px-6 py-2 rounded text-sm font-medium"
-                  style={{ backgroundColor: 'var(--accent-color)', color: '#fff', border: 'none', cursor: 'pointer' }}
-                  onClick={() => setStep('api-key')}
-                >
-                  Continue
-                </button>
-              </div>
-            )}
-            {bunStatus === 'not-found' && (
-              <div>
-                <p className="text-sm mb-2" style={{ color: '#e5c07b' }}>
-                  ⚠ Bun runtime not found. AI terminal will be unavailable.
-                </p>
-                <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
-                  You can still use the editor for writing and previewing Markdown.
-                  Install Bun later from{' '}
-                  <a href="https://bun.sh" target="_blank" style={{ color: 'var(--accent-color)' }}>
-                    bun.sh
-                  </a>{' '}
-                  to enable the AI assistant.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    className="px-4 py-1.5 rounded text-sm"
-                    style={{ backgroundColor: 'var(--accent-color)', color: '#fff', border: 'none', cursor: 'pointer' }}
-                    onClick={() => setStep('api-key')}
-                  >
-                    Skip
-                  </button>
-                  <button
-                    className="px-4 py-1.5 rounded text-sm"
-                    style={{ border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                    onClick={() => window.open('https://bun.sh', '_blank')}
-                  >
-                    Install Bun
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         );
 
@@ -137,7 +51,7 @@ export default function FirstLaunchWizard({ onComplete }: Props) {
               Configure API Key
             </h2>
             <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-              Enter your Anthropic API Key to enable AI assistance.
+              Enter your Anthropic API Key to enable AI chat with Claude Code.
               Get one at{' '}
               <a href="https://console.anthropic.com" target="_blank" style={{ color: 'var(--accent-color)' }}>
                 console.anthropic.com
@@ -207,11 +121,11 @@ export default function FirstLaunchWizard({ onComplete }: Props) {
         return (
           <div className="text-center">
             <h2 className="text-lg font-bold mb-4" style={{ color: '#98c379' }}>
-              ✓ All Set!
+              All Set!
             </h2>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
               {apiKey
-                ? 'Your API key has been saved. You\'re ready to write with AI assistance.'
+                ? "Your API key has been saved. You're ready to chat with Claude Code."
                 : 'You can configure your API key later from Settings.'}
             </p>
             <button
@@ -241,7 +155,7 @@ export default function FirstLaunchWizard({ onComplete }: Props) {
       >
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mb-6">
-          {(['welcome', 'bun-check', 'api-key', 'done'] as Step[]).map((s, i) => (
+          {(['welcome', 'api-key', 'done'] as Step[]).map((s, i) => (
             <div
               key={s}
               className="w-2 h-2 rounded-full transition-colors"
@@ -249,7 +163,7 @@ export default function FirstLaunchWizard({ onComplete }: Props) {
                 backgroundColor:
                   step === s
                     ? 'var(--accent-color)'
-                    : ['welcome', 'bun-check', 'api-key', 'done'].indexOf(step) > i
+                    : ['welcome', 'api-key', 'done'].indexOf(step) > i
                       ? '#98c379'
                       : 'var(--border-color)',
               }}

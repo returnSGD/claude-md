@@ -2,7 +2,7 @@ import React from 'react';
 import { useEditorStore } from '../../stores/useEditorStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { usePreviewStore } from '../../stores/usePreviewStore';
-import { useTerminalStore } from '../../stores/useTerminalStore';
+import { useChatStore } from '../../stores/useChatStore';
 
 export default function StatusBar() {
   const getActiveTab = useEditorStore((s) => s.getActiveTab);
@@ -12,8 +12,8 @@ export default function StatusBar() {
   const toggleMode = useThemeStore((s) => s.toggleMode);
   const viewMode = usePreviewStore((s) => s.viewMode);
   const setViewMode = usePreviewStore((s) => s.setViewMode);
-  const isTerminalVisible = useTerminalStore((s) => s.isVisible);
-  const toggleTerminal = useTerminalStore((s) => s.toggleVisible);
+  const isChatVisible = useChatStore((s) => s.isVisible);
+  const toggleChat = useChatStore((s) => s.toggleVisible);
 
   const tab = getActiveTab();
   const cursorPos = editorView
@@ -60,14 +60,24 @@ export default function StatusBar() {
           {viewMode === 'split' ? '◫ Split' : viewMode === 'edit-only' ? '✎ Edit' : '◉ Preview'}
         </button>
 
-        {/* Terminal toggle */}
+        {/* Chat toggle */}
         <button
           className="hover:underline cursor-pointer"
           style={{ border: 'none', background: 'none', color: 'inherit', fontSize: 'inherit' }}
-          onClick={toggleTerminal}
-          title="Toggle Terminal (Ctrl+J)"
+          onClick={toggleChat}
+          title="Toggle Chat (Ctrl+J)"
         >
-          {isTerminalVisible ? '▼ Terminal' : '▶ Terminal'}
+          {isChatVisible ? '▼ Chat' : '▶ Chat'}
+        </button>
+
+        {/* Settings */}
+        <button
+          className="hover:underline cursor-pointer"
+          style={{ border: 'none', background: 'none', color: 'inherit', fontSize: 'inherit' }}
+          onClick={() => window.dispatchEvent(new CustomEvent('open-settings'))}
+          title="Settings (Ctrl+,)"
+        >
+          ⚙ Settings
         </button>
 
         {/* Theme toggle */}

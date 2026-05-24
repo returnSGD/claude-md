@@ -14,7 +14,7 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['electron', 'node-pty', 'chokidar', 'markdown-it'],
+              external: ['electron', 'node-pty', 'chokidar', 'markdown-it', 'markdown-it-emoji', 'markdown-it-sub', 'markdown-it-sup', 'markdown-it-mark', 'highlight.js', 'katex'],
             },
           },
         },

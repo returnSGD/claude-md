@@ -1,20 +1,20 @@
 import React from 'react';
-import TerminalPanel from '../terminal/TerminalPanel';
-import { useTerminalStore } from '../../stores/useTerminalStore';
+import ChatPanel from '../chat/ChatPanel';
+import { useChatStore } from '../../stores/useChatStore';
 
 export default function BottomPanel() {
-  const toggleVisible = useTerminalStore((s) => s.toggleVisible);
-  const isConnected = useTerminalStore((s) => s.isConnected);
+  const toggleVisible = useChatStore((s) => s.toggleVisible);
+  const isConnected = useChatStore((s) => s.isConnected);
 
   return (
     <div
       className="h-full flex flex-col"
       style={{
-        backgroundColor: 'var(--terminal-bg)',
+        backgroundColor: 'var(--bg-primary)',
         borderTop: '1px solid var(--border-color)',
       }}
     >
-      {/* Terminal header */}
+      {/* Chat header */}
       <div
         className="flex items-center justify-between px-3 py-1 flex-shrink-0"
         style={{
@@ -23,8 +23,11 @@ export default function BottomPanel() {
         }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-            AI Terminal
+          <span
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Claude Code Chat
           </span>
           {isConnected && (
             <span
@@ -37,15 +40,15 @@ export default function BottomPanel() {
         <button
           className="toolbar-btn text-xs"
           onClick={toggleVisible}
-          title="Close Terminal (Ctrl+J)"
+          title="Close Chat (Ctrl+J)"
         >
           ✕
         </button>
       </div>
 
-      {/* Terminal content */}
+      {/* Chat content */}
       <div className="flex-1 overflow-hidden">
-        <TerminalPanel />
+        <ChatPanel />
       </div>
     </div>
   );

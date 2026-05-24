@@ -52,5 +52,5 @@ linux:
 
 publish:
   - provider: github
-    owner: your-org
-    repo: claude-md-editor
+    owner: returnSGD
+    repo: claude-md

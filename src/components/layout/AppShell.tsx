@@ -7,13 +7,13 @@ import PreviewPane from '../preview/PreviewPane';
 import StatusBar from '../statusbar/StatusBar';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { usePreviewStore } from '../../stores/usePreviewStore';
-import { useTerminalStore } from '../../stores/useTerminalStore';
+import { useChatStore } from '../../stores/useChatStore';
 
 export default function AppShell() {
   const isSidebarVisible = useThemeStore((s) => s.isSidebarVisible);
   const isFocusMode = useThemeStore((s) => s.isFocusMode);
   const viewMode = usePreviewStore((s) => s.viewMode);
-  const isTerminalVisible = useTerminalStore((s) => s.isVisible);
+  const isChatVisible = useChatStore((s) => s.isVisible);
 
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [editorWidth, setEditorWidth] = useState<number | null>(null); // null = 50%
@@ -134,16 +134,16 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Terminal resizer */}
-      {isTerminalVisible && !isFocusMode && (
+      {/* Chat resizer */}
+      {isChatVisible && !isFocusMode && (
         <div
           className="resize-handle resize-handle-vertical"
           onMouseDown={handleMouseDown('terminal')}
         />
       )}
 
-      {/* Bottom terminal panel */}
-      {isTerminalVisible && !isFocusMode && (
+      {/* Bottom chat panel */}
+      {isChatVisible && !isFocusMode && (
         <div style={{ height: terminalHeight, flexShrink: 0 }}>
           <BottomPanel />
         </div>

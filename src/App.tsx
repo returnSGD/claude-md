@@ -1,11 +1,13 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import AppShell from './components/layout/AppShell';
 import GlobalSearchDialog from './components/dialogs/GlobalSearchDialog';
+import SettingsDialog from './components/dialogs/SettingsDialog';
 import FirstLaunchWizard from './components/dialogs/FirstLaunchWizard';
 import { useThemeStore } from './stores/useThemeStore';
 import { useEditorStore } from './stores/useEditorStore';
 import { useFileStore } from './stores/useFileStore';
-import { useTerminalStore } from './stores/useTerminalStore';
+import { useChatStore } from './stores/useChatStore';
+import { useSettingsStore } from './stores/useSettingsStore';
 import { usePreviewStore } from './stores/usePreviewStore';
 import { useAutoSave } from './hooks/useAutoSave';
 
@@ -24,20 +26,20 @@ export default function App() {
   const refreshTree = useFileStore((s) => s.refreshTree);
   const rootPath = useFileStore((s) => s.rootPath);
 
-  const isConnected = useTerminalStore((s) => s.isConnected);
-  const connect = useTerminalStore((s) => s.connect);
-  const checkBunAvailability = useTerminalStore((s) => s.checkBunAvailability);
+  const isChatConnected = useChatStore((s) => s.isConnected);
+  const connectChat = useChatStore((s) => s.connect);
 
   const viewMode = usePreviewStore((s) => s.viewMode);
   const setViewMode = usePreviewStore((s) => s.setViewMode);
 
   const toggleSidebar = useThemeStore((s) => s.toggleSidebar);
-  const toggleTerminal = useTerminalStore((s) => s.toggleVisible);
+  const toggleChat = useChatStore((s) => s.toggleVisible);
   const toggleFocusMode = useThemeStore((s) => s.toggleFocusMode);
   const toggleMode = useThemeStore((s) => s.toggleMode);
 
   // Dialog state
   const [showSearch, setShowSearch] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showFirstLaunch, setShowFirstLaunch] = useState(false);
 
   // Auto-save
@@ -56,9 +58,11 @@ export default function App() {
     }
   }, []);
 
-  // Check Bun availability on startup
+  // Listen for open-settings event from status bar
   useEffect(() => {
-    checkBunAvailability();
+    const handler = () => setShowSettings(true);
+    window.addEventListener('open-settings', handler);
+    return () => window.removeEventListener('open-settings', handler);
   }, []);
 
   // Keyboard shortcuts
@@ -127,7 +131,7 @@ export default function App() {
           setViewMode('preview-only');
           break;
         case 'toggle-terminal':
-          toggleTerminal();
+          toggleChat();
           break;
         case 'toggle-sidebar':
           toggleSidebar();
@@ -140,6 +144,9 @@ export default function App() {
           break;
         case 'theme-light':
           setMode('light');
+          break;
+        case 'open-settings':
+          setShowSettings(true);
           break;
       }
     });
@@ -196,14 +203,16 @@ export default function App() {
     }
   }, [activeTabId]);
 
+  const exportSettings = useSettingsStore((s) => s.exportSettings);
+
   const handleExport = useCallback(
     async (format: 'html' | 'pdf' | 'docx') => {
       if (!window.electronAPI) return;
       const tab = getActiveTab();
       if (!tab) return;
-      await window.electronAPI.export[format](tab.content);
+      await window.electronAPI.export[format](tab.content, { exportSettings });
     },
-    [activeTabId]
+    [activeTabId, exportSettings]
   );
 
   const handleFirstLaunchComplete = useCallback(
@@ -215,10 +224,10 @@ export default function App() {
     []
   );
 
-  // Connect terminal on first load
+  // Connect chat on first load
   useEffect(() => {
-    if (!isConnected && rootPath && window.electronAPI) {
-      connect(rootPath);
+    if (!isChatConnected && rootPath && window.electronAPI) {
+      connectChat(rootPath);
     }
   }, [rootPath]);
 
@@ -228,6 +237,10 @@ export default function App() {
       <GlobalSearchDialog
         isOpen={showSearch}
         onClose={() => setShowSearch(false)}
+      />
+      <SettingsDialog
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
       {showFirstLaunch && (
         <FirstLaunchWizard onComplete={handleFirstLaunchComplete} />

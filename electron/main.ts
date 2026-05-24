@@ -4,6 +4,8 @@ import { registerFileSystemHandlers } from './ipc/fileSystem';
 import { registerTerminalHandlers } from './ipc/terminal';
 import { registerExportHandlers } from './ipc/export';
 import { registerImageHandlers } from './ipc/imageUpload';
+import { registerChatHandlers } from './ipc/chat';
+import { registerSettingsHandlers } from './ipc/settings';
 import { buildAppMenu } from './menu/appMenu';
 import { getUserDataPath, getConfigPath } from './utils/paths';
 
@@ -46,6 +48,8 @@ app.whenReady().then(() => {
   registerTerminalHandlers(ipcMain);
   registerExportHandlers(ipcMain);
   registerImageHandlers(ipcMain);
+  registerChatHandlers(ipcMain);
+  registerSettingsHandlers(ipcMain);
 
   // App-level IPC handlers
   ipcMain.handle('app:getVersion', () => app.getVersion());

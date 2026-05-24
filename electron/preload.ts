@@ -38,6 +38,19 @@ const electronAPI = {
     },
   },
 
+  chat: {
+    start: (workDir: string) => ipcRenderer.invoke('chat:start', workDir),
+    send: (sessionId: string, content: string) =>
+      ipcRenderer.invoke('chat:send', sessionId, content),
+    interrupt: (sessionId: string) => ipcRenderer.invoke('chat:interrupt', sessionId),
+    stop: (sessionId: string) => ipcRenderer.invoke('chat:stop', sessionId),
+    onMessage: (callback: (msg: any) => void) => {
+      const handler = (_event: any, msg: any) => callback(msg);
+      ipcRenderer.on('chat:message', handler);
+      return () => ipcRenderer.removeListener('chat:message', handler);
+    },
+  },
+
   export: {
     html: (content: string, options?: any) =>
       ipcRenderer.invoke('export:html', content, options),
@@ -45,6 +58,13 @@ const electronAPI = {
       ipcRenderer.invoke('export:pdf', content, options),
     docx: (content: string, options?: any) =>
       ipcRenderer.invoke('export:docx', content, options),
+  },
+
+  settings: {
+    getAll: () => ipcRenderer.invoke('settings:getAll'),
+    saveAll: (data: any) => ipcRenderer.invoke('settings:saveAll', data),
+    getApiKey: () => ipcRenderer.invoke('settings:getApiKey'),
+    getExportSettings: () => ipcRenderer.invoke('settings:getExportSettings'),
   },
 
   image: {

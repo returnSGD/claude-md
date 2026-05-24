@@ -102,7 +102,7 @@ export function buildAppMenu(mainWindow: BrowserWindow): Menu {
         },
         { type: 'separator' },
         {
-          label: 'Toggle Terminal',
+          label: 'Toggle Chat',
           accelerator: 'CmdOrCtrl+J',
           click: () => mainWindow.webContents.send('menu:action', 'toggle-terminal'),
         },
@@ -135,6 +135,16 @@ export function buildAppMenu(mainWindow: BrowserWindow): Menu {
           label: 'Light Theme',
           type: 'radio',
           click: () => mainWindow.webContents.send('menu:action', 'theme-light'),
+        },
+      ],
+    },
+    {
+      label: 'Settings',
+      submenu: [
+        {
+          label: 'Open Settings...',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => mainWindow.webContents.send('menu:action', 'open-settings'),
         },
       ],
     },

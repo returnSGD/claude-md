@@ -19,6 +19,16 @@ export interface ExportOptions {
   title?: string;
   customCSS?: string;
   pageSize?: string;
+  exportSettings?: {
+    fontFamily?: string;
+    fontSize?: number;
+    lineHeight?: number;
+    pageSize?: 'A4' | 'Letter';
+    marginTop?: number;
+    marginBottom?: number;
+    marginLeft?: number;
+    marginRight?: number;
+  };
 }
 
 export interface ImageUploadResult {
@@ -56,10 +66,23 @@ export interface ElectronAPI {
     destroy(sessionId: number): Promise<void>;
     onData(callback: (data: TerminalDataEvent) => void): () => void;
   };
+  chat: {
+    start(workDir: string): Promise<string | null>;
+    send(sessionId: string, content: string): Promise<boolean>;
+    interrupt(sessionId: string): Promise<boolean>;
+    stop(sessionId: string): Promise<boolean>;
+    onMessage(callback: (msg: any) => void): () => void;
+  };
   export: {
     html(content: string, options?: ExportOptions): Promise<string | null>;
     pdf(content: string, options?: ExportOptions): Promise<string | null>;
     docx(content: string, options?: ExportOptions): Promise<string | null>;
+  };
+  settings: {
+    getAll(): Promise<any>;
+    saveAll(data: any): Promise<boolean>;
+    getApiKey(): Promise<string>;
+    getExportSettings(): Promise<any>;
   };
   image: {
     uploadFromPath(filePath: string): Promise<ImageUploadResult>;
